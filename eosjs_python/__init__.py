@@ -68,10 +68,10 @@ class Eos:
             self.key_provider,
             config['owner_public_key'],
             config['active_public_key'],
-            config['buyrambytes_bytes'] if 'buyrambytes_bytes' in config else 8192,
-            config['delegatebw_stake_net_quantity'] if 'delegatebw_stake_net_quantity' in config else '100.0000 SYS',
-            config['delegatebw_stake_cpu_quantity'] if 'delegatebw_stake_cpu_quantity' in config else '100.0000 SYS',
-            config['delegatebw_transfer'] if 'delegatebw_transfer' in config else 0
+            config['buyrambytes_bytes'] if 'buyrambytes_bytes' in config else 819,
+            config['delegatebw_stake_net_quantity'] if 'delegatebw_stake_net_quantity' in config else '1.0000 EOS',
+            config['delegatebw_stake_cpu_quantity'] if 'delegatebw_stake_cpu_quantity' in config else '1.0000 EOS',
+            config['delegatebw_transfer'] if 'delegatebw_transfer' in config else 1
         )
         response = muterun_js(self.current_dir + '/js/CreateAccount.js', arguments=arguments)
         if response.exitcode == 0:

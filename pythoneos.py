@@ -1,63 +1,97 @@
 # /home/jaspreet/.local/lib/python3.6/site-packages
-# # from eosapi import Client
-# # from eosapi import HttpClient
+# Reference:https://github.com/EvaCoop/eosjs_python
 
-# # # c = Client(nodes=['http://127.0.0.1:8888'])
+import requests
+import json
 
-# # # c.get_info()
-# # # c.get_account('alice')
+#payload = "{\"block_num_or_id\":\"500000\"}"
 
-# # h = HttpClient(["https://jungle2.cryptolions.io:443"])
+headers = {
+    'accept': "application/json",
+    'content-type': "application/json"
+    }
 
-# # print(h.exec('chain', 'get_block', '{"block_num_or_id": 53686345}'))
+def get_table(contractName,tableName,scope):
+	url = "https://jungle2.cryptolions.io:443/v1/chain/get_table_rows"
+	payload = "{\"code\":\""+contractName+"\",\"table\":\""+tableName+"\",\"scope\":\""+scope+"\",\"index_position\":\"primary\",\"json\":\"true\"}"
+	response = requests.request("POST", url, data=payload, headers=headers)
+	return response.text	
 
-# import requests
-
-# url = "https://jungle2.cryptolions.io:443/v1/chain/get_table_rows"
-
-# #payload = "{\"block_num_or_id\":\"500000\"}"
-
-# payload = "{\"code\":\"zeptagram123\",\"table\":\"stat\",\"scope\":\"ZPT\",\"index_position\":\"primary\",\"json\":\"true\"}"
-
-# headers = {
-#     'accept': "application/json",
-#     'content-type': "application/json"
-#     }
-
-# response = requests.request("POST", url, data=payload, headers=headers)
-
-# print(response.text)
-
-
-# # headers = {
-# #     'accept': "application/json",
-# #     'content-type': "application/json"
-# #     }
-
-# # response = requests.request("POST", url, data=payload, headers=headers)
-
-# # print(response.text)
-
-
-# from eosjs_python import Eos
-
-
-# key_pair = Eos.generate_key_pair()
-# print(key_pair)
+def get_accPublickey(_accname):
+	url = "http://jungle.eoscafeblock.com:8888/v1/chain/get_account"
+	payload = "{\"account_name\":\""+_accname+"\"}"
+	response = requests.request("POST", url, data=payload, headers=headers)
+	pub = json.loads(response.text)
+	return pub['permissions'][1]['required_auth']['keys'][0]['key']
 
 from eosjs_python import Eos
 
-eos = Eos({
+aliceeos = Eos({
 	'http_address': 'https://jungle2.cryptolions.io:443',
 	'key_provider': '5KE2yA2iuQWrzzpSFt3VPCwdYZPrqse9k1z97Bpb5gz9gw1bMxD',
     'chain_id': '1eaa0824707c8c16bd25145493bf062aecddfeb56c736f6ba6397f3195f33c9f'
 })   
 
-#cleos push action eosio.token transfer '["eva","rider1","1 EVA","initial balance"]' -p eva
 
-eos.push_transaction('zeptagram123','transfer','alicezepta12','active',{
-	"from":"alicezepta12",
-	"to":"bobzeptagram",
-	"quantity":"0.0001 ZPT",
-	"memo":""
-})
+bobeos = Eos({
+	'http_address': 'https://jungle2.cryptolions.io:443',
+	'key_provider': '5KcMt7aEEy766dftpaQfTUTHskpQ4iPy2EaGBJuLEhwfQEhaGtV',
+    'chain_id': '1eaa0824707c8c16bd25145493bf062aecddfeb56c736f6ba6397f3195f33c9f'
+})   
+
+signedin=False
+signinacc = bobeos # let bobeos be liquid acc
+signedinaccName = 'bobzeptagram'
+
+
+def transferVID(_from,_to,_quantity,signer):
+  signer.push_transaction('zeptagram123','transfer',_from,'active',{
+	"from":_from,
+	"to":_to,
+	"quantity":_quantity,
+	"memo":""})
+
+# result = get_table("zeptagram123","stat","ZPT")
+# print(result)
+
+# transferVID("alicezepta12","bobzeptagram","0.0001 ZPT",aliceeos)
+
+
+# key_pair = Eos.generate_key_pair()
+
+
+def createacct(_name):
+	key_pair = Eos.generate_key_pair()
+	aliceeos.newaccount({
+		'creator': 'alicezepta12',
+		'name': _name,
+		'owner_public_key': key_pair["public"],
+		'active_public_key': key_pair["public"],
+		'buyrambytes_bytes': 2000,
+		'delegatebw_stake_net_quantity': '1.0000 EOS',
+		'delegatebw_stake_cpu_quantity': '1.0000 EOS',
+		'delegatebw_transfer': 0
+	})
+	return key_pair
+
+def signin(_name,_pk):
+	signineos = Eos({
+		'http_address': 'https://jungle2.cryptolions.io:443',
+		'key_provider': _pk,
+		'chain_id': '1eaa0824707c8c16bd25145493bf062aecddfeb56c736f6ba6397f3195f33c9f'
+	})
+	global signedin,signedinaccName
+	signedin=True
+	signedinaccName=_name
+	global signinacc 
+	signinacc=signineos
+
+
+
+# nk=createacct("alicetesting")	
+# print(nk)
+
+signin("alicetesting","5JCUiyyjjaGxWoNNyAnPYA6FTmAqEjSs9Jw5dkXpPMkTpaZzhvA")
+
+info = get_accPublickey(signedinaccName)
+print(info)
